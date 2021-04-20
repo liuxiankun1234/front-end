@@ -1,10 +1,4 @@
-/**
- *  待处理
- *      Content-type四种常用的编码格式是什么 对应的body解析是啥
- *      到底做了一件什么事，整个请求的流程是什么？
- *      Transfer-Encoding: chunked 什么意思？？ 有多少种值
- *      
-*/
+
 const net = require('net');
 
 const setRequestParamsDefault = {
@@ -193,7 +187,6 @@ class ResponseParser{
             case this.WAITTING_BODY:
                 this.bodyParser.receiveChar(char)
                 break;
-            
         }
     }   
 }
@@ -228,7 +221,14 @@ class TrunkedBodyParser{
                     this.status = this.WAITTING_LENGTH_LINE_END
                     return;
                 }
-                // TODO 为什么先*=16
+                /**
+                 * 例   
+                 *  十进制123
+                 *  (1 * 10 + 2) * 10 + 3 === 123
+                 *  16进制 '10d'
+                 *  (1 * 16 + parseInt(0, 16)) * 16 + parseInt(d, 16) === 269
+                 * 
+                **/
                 this.length *= 16;
                 this.length += parseInt(char, 16)
                 break;
@@ -257,6 +257,7 @@ class TrunkedBodyParser{
         }
     }
 }
+
 (function() {
     const request = new Request({
         host: '192.168.31.228',

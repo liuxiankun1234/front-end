@@ -2,6 +2,7 @@
  *  理解URL到bitMap过程
  *      URL-(HTTP)->HTML-(parse)->DOM-(css computing)-> DOM with CSS -(layout)->DOM with position -(render)->bitMap
  *  有限状态机
+ *      就是一个有状态的机器，每个状态对应不同的函数。
  *      特点
  *          每一个状态都是一个机器
  *              在每一个状态里我们都可以计算、存储、输出
@@ -13,8 +14,18 @@
  *  Moore状态机
  *  Mealy状态机
  *  有限状态机实现正则？？？
+ *  
+ *  问题
+ *      有限状态机实现不确定规则的字符匹配？？
+ *          https://www.clloz.com/programming/front-end/js/2020/07/24/fsm-kmp/
+ *      HTTP TCP IP基础知识补充
+ *      Transfer-Encoding解释
+ *          https://imququ.com/post/transfer-encoding-header-in-http.html
+ *      用net模块实现一个server
  * 
- * 
+ *      Content-type四种常用的编码格式是什么 对应的body解析是啥
+ *      到底做了一件什么事，整个请求的流程是什么？
+ *      Transfer-Encoding: chunked 什么意思？？ 有多少种值
 */
 
 /**
