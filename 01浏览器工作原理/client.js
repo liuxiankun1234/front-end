@@ -15,7 +15,7 @@
  *      需要使用net模块来辅助完成
  *          菜鸟文档    
  *              https://www.runoob.com/nodejs/nodejs-net-module.html
- * 
+ *      
  *          connection = net.createConnection(options)
  *              创建一个到端口 port 和 主机 host的 TCP 连接 返回一个net.Socket
  *              options
@@ -26,11 +26,11 @@
  *          connection.on('data')
  *              
 */
-import Request from './Request'
+import Request from './Request.js'
 
-(function() {
+(async function func() {
     const request = new Request({
-        host: '192.168.31.228',
+        host: 'localhost',
         port: '3000',
         path: '/',
         method: 'GET',
@@ -42,6 +42,6 @@ import Request from './Request'
         }
     })
 
-    const requestBody = request.send();
+    const requestBody = await request.send();
     console.log(requestBody)
 })()

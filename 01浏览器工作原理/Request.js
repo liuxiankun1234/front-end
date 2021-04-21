@@ -1,4 +1,5 @@
 import net from 'net'
+import { parse } from 'node:path'
 const setRequestParamsDefault = {
     method: 'GET',
     port: 80,
@@ -9,18 +10,18 @@ const setRequestParamsDefault = {
 class Request{
     constructor({
         host,
-        port,
-        path,
-        method,
-        headers,
-        data
+        port = setRequestParamsDefault.port,
+        path = setRequestParamsDefault.path,
+        method = setRequestParamsDefault.method,
+        data = setRequestParamsDefault.data,
+        headers
     }) {
         this.host = host
-        this.port = port  || setRequestParamsDefault.port
-        this.path = path || setRequestParamsDefault.path
-        this.method = method || setRequestParamsDefault.method
+        this.port = port
+        this.path = path
+        this.method = method
         this.headers = headers
-        this.data = data || setRequestParamsDefault.data
+        this.data = data
         /**
          *  使用HTTP/1.1版本 
          *      必须有的首部
@@ -46,10 +47,11 @@ class Request{
 
     send(connection) {
         return new Promise((resolve, reject) => {
-
+            const parser = new ResponseParser();
             if(connection) {
                 connection.write(this.toString())
             }else{
+                console.log(this.host, this.port)
                 connection = net.createConnection({
                     host: this.host,
                     port: this.port
@@ -58,6 +60,18 @@ class Request{
                 })
             }
 
+            connection.on('data', function(data) {
+                parser.receive(data.toString())
+                
+                if(parser.isFinnished) {
+                    resolve(parser.response)
+                    connection.end()
+                }
+            })
+            connection.on('error', function() {
+                reject('error')
+                connection.end()
+            })
         })
     }
     toString() {
