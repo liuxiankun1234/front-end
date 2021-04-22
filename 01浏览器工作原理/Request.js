@@ -1,5 +1,5 @@
 import net from 'net'
-import { parse } from 'node:path'
+import ResponseParser from './ResponseParser.js'
 const setRequestParamsDefault = {
     method: 'GET',
     port: 80,
@@ -62,8 +62,7 @@ class Request{
 
             connection.on('data', function(data) {
                 parser.receive(data.toString())
-                
-                if(parser.isFinnished) {
+                if(parser.isFinished) {
                     resolve(parser.response)
                     connection.end()
                 }
