@@ -44,14 +44,12 @@ class Request{
         }
         this.headers['Content-Length'] = this.bodyText.length;
     }
-
     send(connection) {
         return new Promise((resolve, reject) => {
             const parser = new ResponseParser();
             if(connection) {
                 connection.write(this.toString())
             }else{
-                console.log(this.host, this.port)
                 connection = net.createConnection({
                     host: this.host,
                     port: this.port
@@ -61,6 +59,7 @@ class Request{
             }
 
             connection.on('data', function(data) {
+                console.log(data.toString())
                 parser.receive(data.toString())
                 if(parser.isFinished) {
                     resolve(parser.response)

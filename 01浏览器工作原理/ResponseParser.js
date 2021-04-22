@@ -30,15 +30,18 @@
  *          body是以一个16进制的数字开始 用来表示请求体的内容长度
  * 
 */
-class ResponseParser{
+import TrunkedBodyParser from './TrunkedBodyParser.js'
+
+export default class ResponseParser{
     constructor() {
         this.STATUS_START_LINE = 0
         this.STATUS_START_LINE_END = 1
         this.STATUS_START_HEADER_NAME = 2
         this.STATUS_START_HEADER_SPACE = 3
         this.STATUS_START_HEADER_VALUE = 4
-        this.STATUS_START_HEADER_BLOCK_END = 5
-        this.STATUS_START_BODY = 6
+        this.STATUS_START_HEADER_LINE_END = 5
+        this.STATUS_START_HEADER_BLOCK_END = 6
+        this.STATUS_START_BODY = 7
 
         // 响应行
         this.responseLine = ''
@@ -49,7 +52,19 @@ class ResponseParser{
         this.headerValue = ''
         this.bodyParser = null;
     }
-
+    get isFinished() {
+        return this.bodyParser && this.bodyParser.isFinished
+    }
+    get response() {
+        this.responseLine.match(/HTTP\/1\.1 (\d+) ([a-zA-Z]+)/)
+        
+        return {
+            statusCode: RegExp.$1,
+            statusText: RegExp.$2,
+            headers: this.headers,
+            body: this.bodyParser.content.join('')
+        }
+    }
     receive(string) {
         for(let char of string) {
             this.receiveChar(char);
@@ -57,7 +72,7 @@ class ResponseParser{
     }
 
     receiveChar(char) {
-        switch(char) {
+        switch(this.status) {
             case this.STATUS_START_LINE:
                 // 表示当前响应行 结束
                 if(char === '\r') {
@@ -95,13 +110,19 @@ class ResponseParser{
             case this.STATUS_START_HEADER_VALUE:
                 // 匹配到\r证明当前响应首部字段解析完成 进入下递归解析过程
                 if(char === '\r') {
-                    this.status = this.STATUS_START_HEADER_NAME
+                    this.status = this.STATUS_START_HEADER_LINE_END
                     this.headers[this.headerName] = this.headerValue
                     this.headerName = ''
                     this.headerValue = ''
                     return;
                 }
                 this.headerValue += char;
+                break
+            case this.STATUS_START_HEADER_LINE_END:
+                if(char === '\n') {
+                    this.status = this.STATUS_START_HEADER_NAME
+                    return;
+                }
                 break
             case this.STATUS_START_HEADER_BLOCK_END:
                 if(char === '\n') {
@@ -110,11 +131,8 @@ class ResponseParser{
                 }
                 break
             case this.STATUS_START_BODY:
-                this.bodyParser.receive(char);
+                this.bodyParser.receiveChar(char);
                 break
         }
-        
-        console.log(char)
-        return char;
     }
 }

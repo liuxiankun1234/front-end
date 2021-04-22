@@ -27,6 +27,7 @@
  *              
 */
 import Request from './Request.js'
+import * as parser from './parser.js'
 
 (async function func() {
     const request = new Request({
@@ -42,6 +43,7 @@ import Request from './Request.js'
         }
     })
 
-    const requestBody = await request.send();
-    console.log(requestBody)
+    const reponse = await request.send();
+
+    parser.parserHTML(reponse.body)
 })()

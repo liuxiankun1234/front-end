@@ -22,9 +22,6 @@ class TrunkedBodyParser{
         */
         switch(this.status) {
             case this.WAITTING_LENGTH:
-                if(this.length === 0) {
-                    this.isFinished = true;
-                }
                 if(char === '\r') {
                     this.status = this.WAITTING_LENGTH_END;
                     return
@@ -60,10 +57,11 @@ class TrunkedBodyParser{
                 break;
             case this.WAITTING_NEW_LINE_END:
                 if(char === '\n') {
+                    this.status = this.WAITTING_LENGTH
+
                     if(this.length === 0) {
                         this.isFinished = true;
                     }
-                    this.status = this.WAITTING_LENGTH
                 }
                 break;
         }
