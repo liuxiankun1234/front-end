@@ -8,7 +8,7 @@
  *          Connection: keep-alive
  *          Transfer-Encoding: chunked
  * 
- *          10d (注：内容主题的length)
+ *          10d (注：响应主题字节长度的length 中文字节长度可能是2或者3)
  *          <!DOCTYPE html>
  *          <html lang="en">
  *          <head>
@@ -28,6 +28,7 @@
  *          每一个header是由\r\n关联
  *          headers结束是以\r\n结束
  *          body是以一个16进制的数字开始 用来表示请求体的内容长度
+ *          中文字节码长度问题
  * 
 */
 import TrunkedBodyParser from './TrunkedBodyParser.js'
