@@ -45,5 +45,7 @@ import * as parser from './parser.js'
 
     const reponse = await request.send();
 
-    parser.parserHTML(reponse.body)
+    let dom =  parser.parserHTML(reponse.body)
+
+    console.log(dom, JSON.stringify(dom, null, 2))
 })()

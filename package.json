@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/liuxiankun1234/front-end/issues"
   },
-  "homepage": "https://github.com/liuxiankun1234/front-end#readme"
+  "homepage": "https://github.com/liuxiankun1234/front-end#readme",
+  "dependencies": {
+    "css": "^3.0.0"
+  }
 }

@@ -11,6 +11,7 @@
  *          < div>S< /div>      被认为是文本节点    '< div>S< /div>'
  * 
 */
+import css from 'css';
 const EOF = Symbol('End Of File')
 
 let currentToken        = null;
@@ -21,11 +22,130 @@ const stack = [
         children: []
     }
 ]
-console.log(122)
-function emit(token) {
-    if(token.type === 'text') {
-        return;
+let currentTextNode = null;
+
+const rules = []
+function addCSSRules(text) {
+    const ast = css.parse(text);
+    rules.push(
+        ...ast.stylesheet.rules
+    )
+}
+function specificity(selector) {
+    /**
+     *  p代表一个标志位的四元组
+     *  [0, 0, 0, 0]
+     *      第零位 表示行内元素
+     *      第一位 表示ID选择器
+     *      第二位 表示class选择器
+     *      第三位 表示标签选择器
+    **/
+    var p = [0, 0, 0, 0]
+
+    var selectors = selector.split(' ');
+
+    for(let part of selectors) {
+        if(part.charAt(0) === '#') {
+            p[1] += 1
+        }else if(part.charAt(0) === '.') {
+            p[2] += 1
+        }else{
+            p[3] += 1
+        }
     }
+    return p;
+}
+function compare(sp1, sp2) {
+    if(sp1[0] - sp2[0]) {
+        return sp1[0] - sp2[0] 
+    }
+    if(sp1[1] - sp2[1]) {
+        return sp1[1] - sp2[1] 
+    }
+    if(sp1[2] - sp2[2]) {
+        return sp1[2] - sp2[2] 
+    }
+    return sp1[3] - sp2[3] 
+}
+function match(element, selector) {
+    if(!selector || !element.type === 'element') {
+        return false
+    }
+
+    if(selector.charAt(0) === '.') {
+        // 匹配当前className
+        const attr = element.attributes.filter(attr => attr.name === 'class')[0]
+        if(attr && attr.value === selector.replace('.', '')) {
+            return true;
+        }
+    }else if(selector.charAt(0) === '#') {
+        // 匹配当前className
+        const attr = element.attributes.filter(attr => attr.name === 'id')[0]
+        if(attr && attr.value === selector.replace('#', '')) {
+            return true;
+        }
+    }else {
+        if(element.tagName === selector) {
+            return true;
+        }
+    }
+    return false
+}
+// 计算生成CSS规则
+function computedCSS(element) {
+    // 匹配规则 从当前元素向父级元素一层层匹配
+    var elements = stack.slice().reverse();
+
+
+    if(!element.computedStyle) {
+        element.computedStyle = {}
+    }
+
+    for(let rule of rules) {
+        // .book .name ----> 改成 .name .book 这样匹配高效一点
+        var selectorParts = rule.selectors[0].split(' ').reverse();
+
+        if(!match(element, selectorParts[0])) {
+            return;
+        }
+
+        let matched = false;
+
+        var j = 1;
+        for(var i = 0; i < elements.length; i++) {
+            if(match(elements[i], selectorParts[j])) {
+                j++
+            }
+        }
+
+        if(j >= selectorParts.length) {
+            matched = true; 
+        }
+
+        if(matched) {
+            var sp = specificity(rule.selectors[0])
+            var computedStyle = element.computedStyle
+
+            for(let declaration of rule.declarations) {
+                if(!computedStyle[declaration.property]) {
+                    computedStyle[declaration.property] = {}
+                }
+
+                if(!computedStyle[declaration.property].specificity) {
+                    computedStyle[declaration.property].value = declaration.value
+                    computedStyle[declaration.property].specificity = sp;
+                }else if(compare(computedStyle[declaration.property].specificity, sp) < 0){
+                    computedStyle[declaration.property].value = declaration.value
+                    computedStyle[declaration.property].specificity = sp;
+                }
+                
+            }
+        }
+    }
+}
+
+// 构建dom树
+function emit(token) {
     const top = stack[stack.length - 1];
     if(token.type === 'startTag') {
         const element = {
@@ -44,20 +164,39 @@ function emit(token) {
             })
         })
 
+        computedCSS(element)
+
         top.children.push(element)
-        element.parent = top;
 
         if(!token.isSelfClosing) {
             stack.push(element)
         }
+        currentTextNode = null
     }else if(token.type === 'endTag') {
         if(top.tagName !== token.tagName) {
             throw new Error('tag start end do not match')
         }else{
+            /**
+             *  仅支持style标签样式
+            */
+            if(top.tagName === 'style') {
+                addCSSRules(top.children[0].content)
+            }
+
             stack.pop()
         }
+        currentTextNode = null
+    }if(token.type === 'text') {
+        if(currentTextNode === null) {
+            currentTextNode = {
+                type: 'text',
+                content: ''
+            }
+            top.children.push(currentTextNode)
+        }
+        currentTextNode.content += token.content
     }
-    console.log(stack)
+    // console.log(stack)
 }
 
 function data(c) {
@@ -318,6 +457,7 @@ function parserHTML(html) {
         state = state(c)
     }
     state = state(EOF)
+    return stack[0]
 }
 export {
     parserHTML
